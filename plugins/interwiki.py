@@ -2,8 +2,6 @@
 import re
 import urllib
 
-from BufferingBot import Packet
-
 def get_mediawiki_page(page, enc):
     page = page.replace(u' ', u'_')
     page = urllib.quote(page.encode(enc))
