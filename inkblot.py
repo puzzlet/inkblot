@@ -7,9 +7,9 @@ import traceback
 import collections
 
 import irclib
-irclib.DEBUG = 1
+irclib.DEBUG = 0
 
-from BufferingBot import BufferingBot, Packet
+from BufferingBot import BufferingBot, Message
 
 def periodic(period):
     """Decorate a class instance method so that the method would be
@@ -28,25 +28,36 @@ def periodic(period):
 
 class Inkblot(BufferingBot):
     def __init__(self, config_file_name):
-        BufferingBot.__init__(self, [('irc.freenode.net', 6665)], 'inkblot', 'bot run by wikipedia-ko/PuzzletChung')
-        self.plugins = []
+        self.config = None
         self.config_file_name = config_file_name
+        self.config_timestamp = self.get_config_time()
+        self.config = eval(open(self.config_file_name).read())
+
+        server = self.config['server']
+        nickname = self.config['nickname']
+        BufferingBot.__init__(self, [server], nickname, 'bot')
+        
+        self.plugins = []
+
         self.handlers = collections.defaultdict(list)
-        self.config_timestamp = os.stat(self.config_file_name).st_mtime
-        data = eval(open(self.config_file_name).read())
-        self.version = data['version']
+
+        self.version = self.config['version']
         self.load_plugins()
+
         self.connection.add_global_handler('welcome', self._on_connected)
         self.check_config_file()
 
     def _on_connected(self, connection, event):
-        self.connection.join('#puzzlet')
-        self.connection.join('#wikipedia-ko')
+        for chan in self.config['channels']:
+            self.connection.join(chan)
+
+    def get_config_time(self):
+        return os.stat(self.config_file_name).st_mtime
 
     @periodic(1)
     def check_config_file(self):
         try:
-            t = os.stat(self.config_file_name).st_mtime
+            t = self.get_config_time()
             if t <= self.config_timestamp:
                 return
             self.reload()
@@ -66,16 +77,18 @@ class Inkblot(BufferingBot):
             source = irclib.nm_to_n(source)
         if eventtype in ('privmsg', 'pubmsg'):
             reply_to = target if irclib.is_channel(target) else source
-            self.buffer.push(Packet('privmsg', (reply_to, message)))
+            self.buffer.push(Message('privmsg', (reply_to, message)))
 
     def reload(self):
-        print "reloading"
+        print "reloading..."
         data = eval(open(self.config_file_name).read())
+        self.config = data
         if self.version >= data['version']:
             return
         self.config_timestamp = os.stat(self.config_file_name).st_mtime
         self.version = data['version']
         self.reload_plugins()
+        print "reloaded."
 
     def load_plugins(self):
         import_path = os.path.join(INKBLOT_ROOT, 'plugins') # XXX
@@ -108,7 +121,7 @@ class Inkblot(BufferingBot):
                         reply = event.target() # XXX
                         tb = traceback.format_exc()
                         print tb
-                        self.buffer.push(Packet('privmsg', (reply, tb.splitlines()[-1])))
+                        self.buffer.push(Message('privmsg', (reply, tb.splitlines()[-1])))
                 self.handlers[action].append(handler)
                 self.connection.add_global_handler(action, handler, 0)
         self.plugins.append(plugin)
@@ -126,9 +139,10 @@ def main():
         profile = sys.argv[1]
     if not profile:
         profile = 'config'
-    print profile
+    print "profile:", profile
     config_file_name = os.path.join(INKBLOT_ROOT, '%s.py' % profile)
     inkblot = Inkblot(config_file_name)
+    print "Inkblot.start()"
     inkblot.start()
 
 if __name__ == '__main__':

@@ -1,17 +1,21 @@
 import re
 
-import whois; reload(whois)
-
-from BufferingBot import Packet
+from lib import whois; reload(whois)
 
 def on_msg(bot, connection, event):
     msg = event.arguments()[0]
-    if event.source in ['uniko', 'kouni']:
+    # XXX
+    source = str(event.source)
+    if '=' in source: source = source.split('=',1)[1]
+    if '~' in source: source = source.split('~',1)[1]
+    if source in ['uniko', 'kouni', '|']:
         msg = re.sub(r'^<.*?> ', '', msg, 1)
     if not msg.startswith('!ipw'):
         return
 
     ip = msg.strip()
+    ip = ip.split(' ',1)[1]
+    print 'ip:', ip
     res = whois.IPWhois(ip.encode('utf-8'))
     output = u''
     output += u'[\x1f%s\x1f] ' % res['source']
@@ -23,6 +27,7 @@ def on_msg(bot, connection, event):
         output += u' \x02%(owner)s\x02 (%(route)s/%(netname)s, %(netblock)s)' % res
     else:
         output += u' : \x02%(owner)s\x02 (%(netname)s, %(netblock)s)' % res
+    print 'output:', output
     bot.reply(event, output)
 
 def on_privmsg(bot, connection, event):
