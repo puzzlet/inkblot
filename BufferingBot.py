@@ -91,7 +91,7 @@ class MessageBuffer(object):
                     traceback.print_exc()
                     self.push(message)
                     return
-                if not message.is_system_message():
+                if not self.is_system_message(message):
                     line_counts[target] += 1
         for target, line_count in line_counts.iteritems():
             message = "-- Message lags over %f seconds. Skipping %d line(s).." \
@@ -104,6 +104,9 @@ class MessageBuffer(object):
 
     def has_buffer_by_command(self, command):
         return any(_.command == command for _ in self.heap)
+
+    def is_system_message(self, message):
+        return message.startswith('--') # XXX
 
 class BufferingBot(ircbot.SingleServerIRCBot):
     def __init__(self, network_list, nickname, realname,

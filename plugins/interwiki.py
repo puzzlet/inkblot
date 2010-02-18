@@ -12,6 +12,7 @@ def get_mediawiki_page(page, enc):
 LOCATION = {
     u'b': u'wikibooks',
     u'm': u'meta',
+    u'mw': u'mediawiki',
     u's': u'wikisource',
     u'wikt': u'wiktionary',
 }
@@ -30,6 +31,8 @@ def get_wikipedia_url(page, lang=u'ko', location=u'wikipedia'):
     page = get_mediawiki_page(page, 'utf-8')
     if location in (u'meta', u'commons'):
         return u'http://%s.wikimedia.org/wiki/%s' % (location, page)
+    elif location in (u'mediawiki'):
+        return u'http://www.%s.org/wiki/%s' % (location, page)
     return u'http://%s.%s.org/wiki/%s' % (lang, location, page)
 
 def on_msg(bot, connection, event):

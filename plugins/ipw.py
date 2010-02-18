@@ -10,7 +10,7 @@ def on_msg(bot, connection, event):
     source = source.split('@')[0]
     if '=' in source: source = source.split('=',1)[1]
     if '~' in source: source = source.split('~',1)[1]
-    if source in ['uniko', 'kouni', '|']:
+    if source in ['I|', '|I', '|']:
         msg = re.sub(r'^<.*?> ', '', msg, 1)
     if not msg.startswith('!ipw'):
         return
