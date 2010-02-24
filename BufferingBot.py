@@ -23,8 +23,11 @@ def periodic(period):
 
 class Message():
     def __init__(self, command, arguments, timestamp=None):
+        assert isinstance(command, str)
         self.command = command
-        self.arguments = arguments
+        self.arguments = []
+        for _ in arguments:
+            self.arguments.append(_ if isinstance(_, bytes) else _.encode('utf-8'))
         self.timestamp = time.time() if timestamp is None else timestamp
 
     def __repr__(self):
@@ -36,6 +39,9 @@ class Message():
 
     def __cmp__(self, message):
         return cmp(self.timestamp, message.timestamp)
+
+    def __lt__(self, message):
+        return self.timestamp < message.timestamp
 
     def is_system_message(self):
         if self.command in ['privmsg', 'privnotice']:
@@ -56,7 +62,7 @@ class MessageBuffer(object):
         return len(self.heap)
 
     def _dump(self):
-        print self.heap
+        print(self.heap)
 
     def peek(self):
         return self.heap[0]
@@ -93,7 +99,7 @@ class MessageBuffer(object):
                     return
                 if not self.is_system_message(message):
                     line_counts[target] += 1
-        for target, line_count in line_counts.iteritems():
+        for target, line_count in line_counts.items():
             message = "-- Message lags over %f seconds. Skipping %d line(s).." \
                 % (self.timeout, line_count)
             message = Message(
@@ -148,7 +154,7 @@ class BufferingBot(ircbot.SingleServerIRCBot):
         message = None
         local = False
         if len(self.buffer):
-            print '--- buffer ---'
+            print('--- buffer ---')
             self.buffer._dump()
             self.pop_buffer(self.buffer)
 
@@ -171,8 +177,8 @@ class BufferingBot(ircbot.SingleServerIRCBot):
         self.process_message(message)
         message_ = buffer.pop()
         if message != message_:
-            print message
-            print message_
+            print(message)
+            print(message_)
             assert False
         self.last_tick = tick
 

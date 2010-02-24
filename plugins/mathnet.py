@@ -14,30 +14,30 @@ def search(eng):
         f = con.execute(q).fetchall()
     return f
 
-
 def on_pubmsg(bot, connection, event):
     msg = event.arguments()[0]
-    source = str(event.source())
-    source = source.split('!', 1)[1]
-    source = source.split('@')[0]
-    if '=' in source: source = source.split('=',1)[1]
-    if '~' in source: source = source.split('~',1)[1]
-    if source in ['I|', '|I', '|']:
-        msg = re.sub(r'^<.*?> ', '', msg, 1)
+    source = event.source()
+    source = source.split(b'!', 1)[1]
+    source = source.split(b'@')[0]
+    if b'=' in source: source = source.split(b'=',1)[1]
+    if b'~' in source: source = source.split(b'~',1)[1]
+    if source in [b'I|', b'|I', b'|']:
+        msg = re.sub(b'^<.*?> ', b'', msg, 1)
 
-    commands = ['mathnet', 'mn']
+    commands = [b'mathnet', b'mn']
     for command in commands:
-        if msg.startswith('!'+command+" "): break
+        if msg.startswith(b'!'+command+b" "): break
     else: return
 
-    output = u''
+    output = ''
     try:
+        msg = msg.decode('utf8') # XXX
         s = msg.split(' ', 1)[1].strip()
         f = search(s)
         if f:
             output += " / ".join(" = ".join(i) for i in f)
         else:
-            output += u"'%s': 검색 결과가 없습니다."%s
+            output += "'%s': 검색 결과가 없습니다."%s
     except IndexError:
         return
 

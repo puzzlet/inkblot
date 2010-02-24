@@ -25,7 +25,6 @@ write simpler bots.
 """
 
 import sys
-from UserDict import UserDict
 
 from irclib import SimpleIRCClient
 from irclib import nm_to_n, irc_lower, all_events
@@ -128,12 +127,12 @@ class SingleServerIRCBot(SimpleIRCClient):
 
     def _on_mode(self, c, e):
         """[Internal]"""
-        modes = parse_channel_modes(" ".join(e.arguments()))
+        modes = parse_channel_modes(b" ".join(e.arguments()))
         t = e.target()
         if is_channel(t):
             ch = self.channels[t]
             for mode in modes:
-                if mode[0] == "+":
+                if mode[0] == b"+":
                     f = ch.set_mode
                 else:
                     f = ch.clear_mode
@@ -153,12 +152,12 @@ class SingleServerIRCBot(SimpleIRCClient):
 
         ch = e.arguments()[1]
         for nick in e.arguments()[2].split():
-            if nick[0] == "@":
+            if nick[0] == b"@":
                 nick = nick[1:]
-                self.channels[ch].set_mode("o", nick)
-            elif nick[0] == "+":
+                self.channels[ch].set_mode(b"o", nick)
+            elif nick[0] == b"+":
                 nick = nick[1:]
-                self.channels[ch].set_mode("v", nick)
+                self.channels[ch].set_mode(b"v", nick)
             self.channels[ch].add_user(nick)
 
     def _on_nick(self, c, e):
@@ -186,7 +185,7 @@ class SingleServerIRCBot(SimpleIRCClient):
             if ch.has_user(nick):
                 ch.remove_user(nick)
 
-    def die(self, msg="Bye, cruel world!"):
+    def die(self, msg=b"Bye, cruel world!"):
         """Let the bot die.
 
         Arguments:
@@ -197,7 +196,7 @@ class SingleServerIRCBot(SimpleIRCClient):
         self.connection.disconnect(msg)
         sys.exit(0)
 
-    def disconnect(self, msg="I'll be back!"):
+    def disconnect(self, msg=b"I'll be back!"):
         """Disconnect the bot.
 
         The bot will try to reconnect after a while.
@@ -213,7 +212,7 @@ class SingleServerIRCBot(SimpleIRCClient):
 
         Used when answering a CTCP VERSION request.
         """
-        return "ircbot.py by Joel Rosdahl <joel@rosdahl.net>"
+        return b"ircbot.py by Joel Rosdahl <joel@rosdahl.net>"
 
     def jump_server(self, msg="Changing servers"):
         """Connect to a new server, possibly disconnecting from the current.
@@ -233,14 +232,14 @@ class SingleServerIRCBot(SimpleIRCClient):
         Replies to VERSION and PING requests and relays DCC requests
         to the on_dccchat method.
         """
-        if e.arguments()[0] == "VERSION":
+        if e.arguments()[0] == b"VERSION":
             c.ctcp_reply(nm_to_n(e.source()),
-                         "VERSION " + self.get_version())
-        elif e.arguments()[0] == "PING":
+                         b"VERSION " + self.get_version())
+        elif e.arguments()[0] == b"PING":
             if len(e.arguments()) > 1:
                 c.ctcp_reply(nm_to_n(e.source()),
-                             "PING " + e.arguments()[1])
-        elif e.arguments()[0] == "DCC" and e.arguments()[1].split(" ", 1)[0] == "CHAT":
+                             b"PING " + e.arguments()[1])
+        elif e.arguments()[0] == b"DCC" and e.arguments()[1].split(b" ", 1)[0] == b"CHAT":
             self.on_dccchat(c, e)
 
     def on_dccchat(self, c, e):
@@ -289,13 +288,11 @@ class IRCDict:
     def __iter__(self):
         return iter(self.data)
     def __contains__(self, key):
-        return self.has_key(key)
+        return key in self.data
     def clear(self):
         self.data.clear()
         self.canon_keys.clear()
     def copy(self):
-        if self.__class__ is UserDict:
-            return UserDict(self.data)
         import copy
         return copy.copy(self)
     def keys(self):
@@ -326,15 +323,15 @@ class Channel:
         self.modes = {}
 
     def users(self):
-        """Returns an unsorted list of the channel's users."""
+        """Returns a dictview representing the channel's users."""
         return self.userdict.keys()
 
     def opers(self):
-        """Returns an unsorted list of the channel's operators."""
+        """Returns a dictview representing the channel's operators."""
         return self.operdict.keys()
 
     def voiced(self):
-        """Returns an unsorted list of the persons that have voice
+        """Returns a dictview representing the persons that have voice
         mode set in the channel."""
         return self.voiceddict.keys()
 
@@ -373,13 +370,13 @@ class Channel:
 
         Arguments:
 
-            mode -- The mode (a single-character string).
+            mode -- The mode (a single-character byte).
 
             value -- Value
         """
-        if mode == "o":
+        if mode == b"o":
             self.operdict[value] = 1
-        elif mode == "v":
+        elif mode == b"v":
             self.voiceddict[value] = 1
         else:
             self.modes[mode] = value
@@ -389,14 +386,14 @@ class Channel:
 
         Arguments:
 
-            mode -- The mode (a single-character string).
+            mode -- The mode (a single-character byte).
 
             value -- Value
         """
         try:
-            if mode == "o":
+            if mode == b"o":
                 del self.operdict[value]
-            elif mode == "v":
+            elif mode == b"v":
                 del self.voiceddict[value]
             else:
                 del self.modes[mode]
@@ -407,25 +404,25 @@ class Channel:
         return mode in self.modes
 
     def is_moderated(self):
-        return self.has_mode("m")
+        return self.has_mode(b"m")
 
     def is_secret(self):
-        return self.has_mode("s")
+        return self.has_mode(b"s")
 
     def is_protected(self):
-        return self.has_mode("p")
+        return self.has_mode(b"p")
 
     def has_topic_lock(self):
-        return self.has_mode("t")
+        return self.has_mode(b"t")
 
     def is_invite_only(self):
-        return self.has_mode("i")
+        return self.has_mode(b"i")
 
     def has_allow_external_messages(self):
-        return self.has_mode("n")
+        return self.has_mode(b"n")
 
     def has_limit(self):
-        return self.has_mode("l")
+        return self.has_mode(b"l")
 
     def limit(self):
         if self.has_limit():
@@ -434,10 +431,10 @@ class Channel:
             return None
 
     def has_key(self):
-        return self.has_mode("k")
+        return self.has_mode(b"k")
 
     def key(self):
         if self.has_key():
-            return self.modes["k"]
+            return self.modes[b"k"]
         else:
             return None

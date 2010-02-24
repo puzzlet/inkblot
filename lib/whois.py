@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: cp949 -*-
+# -*- coding: utf8 -*-
 # vim: ts=8 sts=4 et
 #
 # Copyright 2000 Dominic Mitchell <dom@happygiraffe.net>
@@ -63,7 +63,7 @@ def Server(domain):
     """Return the whois server for domain."""
 
     server = INTERNIC            # Default.
-    for tld in servers.keys():
+    for tld in list(servers.keys()):
         l = len(tld)
         if domain[-l:] == tld:
             server = servers[tld]
@@ -74,71 +74,75 @@ def Server(domain):
 def digest_ARIN(winfo):
     r = {}
     try:
-        r[u'owner'] = re.findall(r'OrgName:\s+(.+)', winfo)[0].decode('latin1')
-        r[u'netname'] = re.findall(r'NetName:\s+(.*)', winfo)[0].decode('latin1')
-        r[u'netblock'] = re.findall(r'NetRange:\s+([0-9\.]+) - ([0-9\.]+)', winfo)[0]
+        r['owner'] = re.findall(b'OrgName:\\s+(.+)', winfo)[0].decode('latin1')
+        r['netname'] = re.findall(b'NetName:\\s+(.*)', winfo)[0].decode('latin1')
+        r['netblock'] = re.findall(b'NetRange:\\s+([0-9\\.]+) - ([0-9\\.]+)', winfo)[0]
     except IndexError:
-        r[u'owner'], r[u'netname'] = re.findall(r'(.+) (.+) \(NET-', winfo)[0]
-        r[u'netblock'] = re.findall(r'([0-9\.]+) - ([0-9\.]+)', winfo)[0]
-    r[u'source'] = u'ARIN'
+        r['owner'], r['netname'] = re.findall(b'(.+) (.+) \\(NET-', winfo)[0]
+        r['netblock'] = re.findall(b'([0-9\\.]+) - ([0-9\\.]+)', winfo)[0]
+    r['source'] = 'ARIN'
     return r
 
 def digest_RIPE(winfo): # Used by RIPE, APNIC
     r = {}
-    r[u'netblock'] = re.findall(r'inetnum:\s+([0-9\.]+) {1,2}- {1,2}([0-9\.]+)', winfo)[0]
-    r[u'netname'] = re.findall(r'netname:\s+(.+)', winfo)[0].decode('latin1')
-    r[u'owner'] = re.findall(r'descr:\s+(.+)', winfo)[0].decode('latin1')
+    r['netblock'] = re.findall(b'inetnum:\\s+([0-9\\.]+) {1,2}- {1,2}([0-9\\.]+)', winfo)[0]
+    r['netname'] = re.findall(b'netname:\\s+(.+)', winfo)[0].decode('latin1')
+    r['owner'] = re.findall(b'descr:\\s+(.+)', winfo)[0].decode('latin1')
     try:
-        r[u'route'] = re.findall(r'route:[\s0-9\./]+\ndescr:\s+(.*)', winfo)[0].decode('latin1')
+        r['route'] = re.findall(b'route:[\\s0-9\\./]+\\ndescr:\\s+(.*)', winfo)[0].decode('latin1')
     except IndexError:
         pass
-    r[u'source'] = re.findall(r'source:\s+(.+)', winfo)[0].decode('latin1')
+    r['source'] = re.findall(b'source:\\s+(.+)', winfo)[0].decode('latin1')
     return r
 
 def digest_KRNIC(winfo):
+    winfo = winfo.decode('cp949')
     r = {}
     try:
-        r[u'netblock'] = re.findall(r'IPv4ÁÖ¼Ò\s+: ([0-9\.]+)-([0-9\.]+)', winfo)[0]
+        r['netblock'] = re.findall(r'IPv4ì£¼ì†Œ\s+: ([0-9\.]+)-([0-9\.]+)', winfo)[0]
     except IndexError:
-        r[u'netblock'] = u'no block' # ISP Only Format
-        r[u'netname'] = re.findall(r'¼­ºñ½º¸í\s+: (.+)', winfo)[0].decode('cp949')
-        r[u'owner'] = re.findall(r'±â °ü ¸í\s+: (.+)', winfo)[0].decode('cp949')
+        r['netblock'] = 'no block' # ISP Only Format
+        r['netname'] = re.findall(r'ì„œë¹„ìŠ¤ëª…\s+: (.+)', winfo)[0]
+        r['owner'] = re.findall(r'ê¸° ê´€ ëª…\s+: (.+)', winfo)[0]
     else:
-        r[u'netname'] = re.findall(r'³×Æ®¿öÅ© ÀÌ¸§\s+: (.+)', winfo)[0].decode('cp949')
-        r[u'owner'] = re.findall(r'±â°ü¸í\s+: (.+)', winfo)[0].decode('cp949')
-        try: r[u'route'] = re.findall(r'¿¬°á ISP¸í\s+: (.+)', winfo)[0].decode('cp949')
-        except IndexError: r[u'route'] = u'unknown'
-    r[u'source'] = u'KRNIC'
+        r['netname'] = re.findall(r'ë„¤íŠ¸ì›Œí¬ ì´ë¦„\s+: (.+)', winfo)[0]
+        r['owner'] = re.findall(r'ê¸°ê´€ëª…\s+: (.+)', winfo)[0]
+        try: r['route'] = re.findall(r'ì—°ê²° ISPëª…\s+: (.+)', winfo)[0]
+        except IndexError: r['route'] = 'unknown'
+    r['source'] = 'KRNIC'
     return r
 
 def digest_JPNIC(winfo):
     r = {}
     try:
-        r[u'netblock'] = re.findall(r'a\. \[Network Number\]\s+([0-9\.]+)-([0-9\.]+)', winfo)[0]
+        r['netblock'] = re.findall(b'a\\. \\[Network Number\\]\\s+([0-9\\.]+)-([0-9\\.]+)', winfo)[0]
     except:
-        r[u'netblock'] = re.findall(r'a\. \[Network Number\]\s+([0-9\.]+)', winfo)[0].decode('ascii')
-    r[u'netname'] = re.findall(r'b\. \[Network Name\]\s+(.+)', winfo)[0].decode('shift-jis')
-    r[u'owner'] = re.findall(r'g\. \[Organization\]\s+(.+)', winfo)[0].decode('shift-jis')
-    r[u'source'] = u'JPNIC'
+        r['netblock'] = re.findall(b'a\\. \\[Network Number\\]\\s+([0-9\\.]+)', winfo)[0].decode('ascii')
+    r['netname'] = re.findall(b'b\\. \\[Network Name\\]\\s+(.+)', winfo)[0].decode('shift-jis')
+    r['owner'] = re.findall(b'g\\. \\[Organization\\]\\s+(.+)', winfo)[0].decode('shift-jis')
+    r['source'] = 'JPNIC'
     return r
 
 _=re.compile
 ipwregion = {   # whois server     search suffix,  redirect match, digest
     'ARIN':     ('whois.arin.net', '',  None, digest_ARIN),
-    'RIPE':     ('whois.ripe.net', '',  _('(be found in the RIPE database at whois.ripe.net)|(European Regional Internet Registry/RIPE NCC|RIPE Network Coordination Centre)'), digest_RIPE),
-    'APNIC':    ('whois.apnic.net', '', _('refer to the APNIC Whois Database'), digest_RIPE),
+    'RIPE':     ('whois.ripe.net', '',  _(b'(be found in the RIPE database at whois.ripe.net)|(European Regional Internet Registry/RIPE NCC|RIPE Network Coordination Centre)'), digest_RIPE),
+    'APNIC':    ('whois.apnic.net', '', _(b'refer to the APNIC Whois Database'), digest_RIPE),
 
-    'KRNIC':    ('whois.nic.or.kr', '', _('(For more information, using KRNIC Whois Database)|(please refer to the KRNIC Whois DB)'), digest_KRNIC),
-    'JPNIC':    ('whois.nic.ad.jp', '/e', _('(JPNIC whois server at whois.nic.ad.jp)|(Japan Network Information Center \(NETBLK-JAPAN-NET\))'), digest_JPNIC),
+    'KRNIC':    ('whois.nic.or.kr', '', _(b'(For more information, using KRNIC Whois Database)|(please refer to the KRNIC Whois DB)'), digest_KRNIC),
+    'JPNIC':    ('whois.nic.ad.jp', '/e', _(b'(JPNIC whois server at whois.nic.ad.jp)|(Japan Network Information Center \(NETBLK-JAPAN-NET\))'), digest_JPNIC),
 }
 
 def IPWhois(addr):
     ip = socket.gethostbyname(addr) # this may cause socket.gaierror exception
+    ip = ip.encode('utf8')
     
     winfo = Whois(ip, ipwregion['ARIN'][0])
     wdigest = ipwregion['ARIN'][3]
     while 1:
-        for server, suffix, redir, digest in ipwregion.values():
+        for server, suffix, redir, digest in list(ipwregion.values()):
+            print(repr(redir))
+            print(repr(winfo))
             if redir and redir.search(winfo):
                 winfo = Whois(ip+suffix, server)
                 wdigest = digest
@@ -147,9 +151,9 @@ def IPWhois(addr):
             break
 
     r = wdigest(winfo)
-    r[u'ipv4addr'] = ip.decode('ascii')
-    if isinstance(r[u'netblock'], tuple):
-        r[u'netblock'] = u'-'.join(r[u'netblock'])
+    r['ipv4addr'] = ip.decode('ascii')
+    if isinstance(r['netblock'], tuple):
+        r['netblock'] = b'-'.join(r['netblock'])
     return r
 
 
@@ -165,17 +169,16 @@ def Whois(domain, server=None):
     sock.connect((server, port))
 
     # The protocol itself.
-    sock.send(domain + '\r\n')
+    sock.send(domain + b'\r\n')
     #sock.shutdown(1)     # No more sends. XXX: this doesn't work on RIPE
-    data = ''
+    data = b''
     while 1:
         newdata = sock.recv(16384)
         if not newdata: break
         data = data + newdata
     sock.close()
     # Zap any CR's we see.
-    if string.find(data, '\r') >= 0:
-        data = string.join(string.split(data, '\r'), '')
+    data = b''.join(data.split(b'\r'))
     return data
 
 def WhoisList(domain, server=None):
@@ -207,9 +210,9 @@ if __name__ == '__main__':
         from pprint import pprint
         name = sys.argv[1]
         dom = sys.argv[2]
-        print "%% whois -h %s '%s'" % (dom, name)
+        print("%% whois -h %s '%s'" % (dom, name))
         pprint(WhoisList(name, dom))
     except IndexError:
-        print "usage: whoisserver.py name domain"
+        print("usage: whoisserver.py name domain")
 
 # vim: ai et sw=4 ts=4

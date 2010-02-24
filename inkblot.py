@@ -7,7 +7,6 @@ import traceback
 import collections
 
 import irclib
-irclib.DEBUG = 0
 
 from BufferingBot import BufferingBot, Message
 
@@ -35,7 +34,7 @@ class Inkblot(BufferingBot):
 
         server = self.config['server']
         nickname = self.config['nickname']
-        BufferingBot.__init__(self, [server], nickname, 'bot')
+        BufferingBot.__init__(self, [server], nickname, b'inkblot')
         
         self.plugins = []
 
@@ -80,15 +79,16 @@ class Inkblot(BufferingBot):
             self.buffer.push(Message('privmsg', (reply_to, message)))
 
     def reload(self):
-        print "reloading..."
+        print("reloading...")
         data = eval(open(self.config_file_name).read())
         self.config = data
         if self.version >= data['version']:
             return
         self.config_timestamp = os.stat(self.config_file_name).st_mtime
         self.version = data['version']
+        irclib.DEBUG = data.get('debug', False)
         self.reload_plugins()
-        print "reloaded."
+        print("reloaded.")
 
     def load_plugins(self):
         import_path = os.path.join(INKBLOT_ROOT, 'plugins') # XXX
@@ -118,16 +118,16 @@ class Inkblot(BufferingBot):
                     try:
                         getattr(plugin, 'on_'+action).__call__(self, connection, event)
                     except:
-                        reply = event.target() # XXX
+                        reply = event.target() # XXX freenode only
                         tb = traceback.format_exc()
-                        print tb
+                        print(tb)
                         self.buffer.push(Message('privmsg', (reply, tb.splitlines()[-1])))
                 self.handlers[action].append(handler)
                 self.connection.add_global_handler(action, handler, 0)
         self.plugins.append(plugin)
 
     def reload_plugins(self): # XXX
-        for action, handlers in self.handlers.iteritems():
+        for action, handlers in self.handlers.items():
             for handler in handlers:
                 self.connection.remove_global_handler(action, handler)
         self.load_plugins()
@@ -139,10 +139,10 @@ def main():
         profile = sys.argv[1]
     if not profile:
         profile = 'config'
-    print "profile:", profile
+    print("profile:", profile)
     config_file_name = os.path.join(INKBLOT_ROOT, '%s.py' % profile)
     inkblot = Inkblot(config_file_name)
-    print "Inkblot.start()"
+    print("Inkblot.start()")
     inkblot.start()
 
 if __name__ == '__main__':
