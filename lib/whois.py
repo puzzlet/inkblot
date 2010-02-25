@@ -125,12 +125,12 @@ def digest_JPNIC(winfo):
 
 _=re.compile
 ipwregion = {   # whois server     search suffix,  redirect match, digest
-    'ARIN':     ('whois.arin.net', '',  None, digest_ARIN),
-    'RIPE':     ('whois.ripe.net', '',  _(b'(be found in the RIPE database at whois.ripe.net)|(European Regional Internet Registry/RIPE NCC|RIPE Network Coordination Centre)'), digest_RIPE),
-    'APNIC':    ('whois.apnic.net', '', _(b'refer to the APNIC Whois Database'), digest_RIPE),
+    'ARIN':     ('whois.arin.net', b'',  None, digest_ARIN),
+    'RIPE':     ('whois.ripe.net', b'',  _(b'(be found in the RIPE database at whois.ripe.net)|(European Regional Internet Registry/RIPE NCC|RIPE Network Coordination Centre)'), digest_RIPE),
+    'APNIC':    ('whois.apnic.net', b'', _(b'refer to the APNIC Whois Database'), digest_RIPE),
 
-    'KRNIC':    ('whois.nic.or.kr', '', _(b'(For more information, using KRNIC Whois Database)|(please refer to the KRNIC Whois DB)'), digest_KRNIC),
-    'JPNIC':    ('whois.nic.ad.jp', '/e', _(b'(JPNIC whois server at whois.nic.ad.jp)|(Japan Network Information Center \(NETBLK-JAPAN-NET\))'), digest_JPNIC),
+    'KRNIC':    ('whois.nic.or.kr', b'', _(b'(For more information, using KRNIC Whois Database)|(please refer to the KRNIC Whois DB)'), digest_KRNIC),
+    'JPNIC':    ('whois.nic.ad.jp', b'/e', _(b'(JPNIC whois server at whois.nic.ad.jp)|(Japan Network Information Center \(NETBLK-JAPAN-NET\))'), digest_JPNIC),
 }
 
 def IPWhois(addr):
