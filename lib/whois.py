@@ -153,7 +153,7 @@ def IPWhois(addr):
     r = wdigest(winfo)
     r['ipv4addr'] = ip.decode('ascii')
     if isinstance(r['netblock'], tuple):
-        r['netblock'] = b'-'.join(r['netblock'])
+        r['netblock'] = '-'.join(r['netblock'])
     return r
 
 
