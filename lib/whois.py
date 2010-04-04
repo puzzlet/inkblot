@@ -141,8 +141,6 @@ def IPWhois(addr):
     wdigest = ipwregion['ARIN'][3]
     while 1:
         for server, suffix, redir, digest in list(ipwregion.values()):
-            print(repr(redir))
-            print(repr(winfo))
             if redir and redir.search(winfo):
                 winfo = Whois(ip+suffix, server)
                 wdigest = digest
