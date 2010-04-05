@@ -72,27 +72,29 @@ def Server(domain):
     return server
 
 def digest_ARIN(winfo):
+    winfo = winfo.decode('latin1')
     r = {}
     try:
-        r['owner'] = re.findall(b'OrgName:\\s+(.+)', winfo)[0].decode('latin1')
-        r['netname'] = re.findall(b'NetName:\\s+(.*)', winfo)[0].decode('latin1')
-        r['netblock'] = re.findall(b'NetRange:\\s+([0-9\\.]+) - ([0-9\\.]+)', winfo)[0]
+        r['owner'] = re.findall(r'OrgName:\s+(.+)', winfo)[0]
+        r['netname'] = re.findall(r'NetName:\s+(.*)', winfo)[0]
+        r['netblock'] = re.findall(r'NetRange:\s+([0-9\.]+) - ([0-9\.]+)', winfo)[0]
     except IndexError:
-        r['owner'], r['netname'] = re.findall(b'(.+) (.+) \\(NET-', winfo)[0]
-        r['netblock'] = re.findall(b'([0-9\\.]+) - ([0-9\\.]+)', winfo)[0]
+        r['owner'], r['netname'] = re.findall(r'(.+) (.+) \(NET-', winfo)[0]
+        r['netblock'] = re.findall(r'([0-9\.]+) - ([0-9\.]+)', winfo)[0]
     r['source'] = 'ARIN'
     return r
 
 def digest_RIPE(winfo): # Used by RIPE, APNIC
+    winfo = winfo.decode('latin1')
     r = {}
-    r['netblock'] = re.findall(b'inetnum:\\s+([0-9\\.]+) {1,2}- {1,2}([0-9\\.]+)', winfo)[0]
-    r['netname'] = re.findall(b'netname:\\s+(.+)', winfo)[0].decode('latin1')
-    r['owner'] = re.findall(b'descr:\\s+(.+)', winfo)[0].decode('latin1')
+    r['netblock'] = re.findall(r'inetnum:\s+([0-9\.]+) {1,2}- {1,2}([0-9\.]+)', winfo)[0]
+    r['netname'] = re.findall(r'netname:\s+(.+)', winfo)[0]
+    r['owner'] = re.findall(r'descr:\s+(.+)', winfo)[0]
     try:
-        r['route'] = re.findall(b'route:[\\s0-9\\./]+\\ndescr:\\s+(.*)', winfo)[0].decode('latin1')
+        r['route'] = re.findall(r'route:[\s0-9\./]+\ndescr:\s+(.*)', winfo)[0]
     except IndexError:
         pass
-    r['source'] = re.findall(b'source:\\s+(.+)', winfo)[0].decode('latin1')
+    r['source'] = re.findall(r'source:\s+(.+)', winfo)[0]
     return r
 
 def digest_KRNIC(winfo):
@@ -113,13 +115,14 @@ def digest_KRNIC(winfo):
     return r
 
 def digest_JPNIC(winfo):
+    winfo = winfo.decode('shift-jis')
     r = {}
     try:
-        r['netblock'] = re.findall(b'a\\. \\[Network Number\\]\\s+([0-9\\.]+)-([0-9\\.]+)', winfo)[0]
+        r['netblock'] = re.findall(r'a\. \[Network Number\]\s+([0-9\.]+)-([0-9\.]+)', winfo)[0]
     except:
-        r['netblock'] = re.findall(b'a\\. \\[Network Number\\]\\s+([0-9\\.]+)', winfo)[0].decode('ascii')
-    r['netname'] = re.findall(b'b\\. \\[Network Name\\]\\s+(.+)', winfo)[0].decode('shift-jis')
-    r['owner'] = re.findall(b'g\\. \\[Organization\\]\\s+(.+)', winfo)[0].decode('shift-jis')
+        r['netblock'] = re.findall(r'a\. \[Network Number\]\s+([0-9\.]+)', winfo)[0]
+    r['netname'] = re.findall(r'b\. \[Network Name\]\s+(.+)', winfo)[0]
+    r['owner'] = re.findall(r'g\. \[Organization\]\s+(.+)', winfo)[0]
     r['source'] = 'JPNIC'
     return r
 
