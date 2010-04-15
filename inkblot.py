@@ -34,8 +34,9 @@ class Inkblot(BufferingBot):
 
         server = self.config['server']
         nickname = self.config['nickname']
-        BufferingBot.__init__(self, [server], nickname, b'inkblot')
-        
+        BufferingBot.__init__(self, [server], nickname,
+            username=b'inkblot')
+
         self.plugins = []
 
         self.handlers = collections.defaultdict(list)
@@ -76,11 +77,6 @@ class Inkblot(BufferingBot):
             self.connection.join(chan)
 
     def reply(self, event, message):
-        try:
-            message = message.encode('utf-8')
-        except:
-            traceback.print_exc()
-            return
         eventtype = event.eventtype().lower()
         target = event.target()
         source = event.source()
@@ -88,7 +84,10 @@ class Inkblot(BufferingBot):
             source = irclib.nm_to_n(source)
         if eventtype in ('privmsg', 'pubmsg'):
             reply_to = target if irclib.is_channel(target) else source
-            self.buffer.push(Message('privmsg', (reply_to, message)))
+            reply_to, _ = self.codec.decode(reply_to)
+            assert isinstance(reply_to, str)
+            assert isinstance(message, str)
+            self.push_message(Message('privmsg', (reply_to, message)))
 
     def reload(self):
         data = eval(open(self.config_file_name).read())
@@ -134,8 +133,10 @@ class Inkblot(BufferingBot):
                     except:
                         reply = event.target() # XXX freenode only
                         tb = traceback.format_exc()
+                        assert isinstance(reply, str)
+                        assert isinstance(tb, str)
                         print(tb)
-                        self.buffer.push(
+                        self.push_message(
                             Message('privmsg', (reply, tb.splitlines()[-1])))
                 self.handlers[action].append(handler)
                 self.connection.add_global_handler(action, handler, 0)
