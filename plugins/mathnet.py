@@ -7,11 +7,11 @@ def search(eng):
     """mathnet에서 영어 to 한국어 용어를 검색."""
     global con
     pq = "select english, korean from mathnet where %s order by length(english) asc limit 3"
-    q = pq % ("english = '%s'"%eng)
-    f = con.execute(q).fetchall()
+    q = pq % ("english = '?'")
+    f = con.execute(q, (eng,)).fetchall()
     if not f:
-        q = pq % ("english like '%"+eng+"%'")
-        f = con.execute(q).fetchall()
+        q = pq % ("english like '%?%'")
+        f = con.execute(q, (eng,)).fetchall()
     return f
 
 def on_pubmsg(bot, connection, event):
